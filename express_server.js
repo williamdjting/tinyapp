@@ -3,21 +3,21 @@ const app = express();
 const PORT = 8080; // default port 8080
 
 const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.set("view engine", "ejs");
 const cookieParser = require('cookie-parser');
 app.use(cookieParser())
 
-const users = { 
+const users = {
   "123456": {
-    id: "123456", 
-    email: "william@gmail.com", 
+    id: "123456",
+    email: "william@gmail.com",
     password: "menintrees"
   },
- "123965": {
-    id: "123965", 
-    email: "tommy@gmail.com", 
+  "123965": {
+    id: "123965",
+    email: "tommy@gmail.com",
     password: "eatdinner"
   }
 }
@@ -46,12 +46,12 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls", (req, res) => {
   console.log(req.cookies);
-  let templateVars = { urls: urlDatabase, username: req.cookies["user_id"]};
+  let templateVars = { urls: urlDatabase, username: req.cookies["user_id"] };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  let templateVars = { urls: urlDatabase, username: req.cookies["user_id"]};
+  let templateVars = { urls: urlDatabase, username: req.cookies["user_id"] };
   res.render("urls_new", templateVars);
 });
 
@@ -105,7 +105,7 @@ app.post("/logout", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  let templateVars = { urls: urlDatabase, username: req.cookies["user_id"]};
+  let templateVars = { urls: urlDatabase, username: req.cookies["user_id"] };
   res.render("urls_register", templateVars);
 });
 
@@ -114,13 +114,30 @@ app.post("/register", (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
-  users[id] = {id, email, password};
+  users[id] = { id, email, password };
+  if (password === '' || email === '') {
+    res.status(400).send("Sorry! You can't see that.")
+    console.log(users);
+    return;
+  }
+  checkEmail(email);
   console.log(users);
   res.cookie("user_id", id);
   res.redirect(`/urls/`);
 })
 
+app.get("/login", (req, res) => {
+  let templateVars = { urls: urlDatabase, username: req.cookies["user_id"] };
+  res.render("urls_login", templateVars);
+});
 
+function checkEmail(value) {
+  const existingPassword = users.email;
+  if (value === existingPassword) {
+    res.status(400).send("Sorry! You can't see that.")
+    return;
+  }
+}
 
 function generateRandomString() {
   shortURL = (Math.random().toString(36).substring(7));
