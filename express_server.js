@@ -92,12 +92,7 @@ app.post("/urls/:shortURL", (req, res) => {
   res.redirect(`/urls/`);
 });
 
-app.post("/login", (req, res) => {
-  console.log(req.body.username)
-  res.cookie("user_id", req.body.username)
 
-  res.redirect(`/urls/`);
-});
 
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
@@ -115,12 +110,17 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   users[id] = { id, email, password };
+  if (checkUser(email)) {
+    res.status(400).send("Sorry! You can't see that.")
+    console.log(users);
+    return;
+  }
   if (password === '' || email === '') {
     res.status(400).send("Sorry! You can't see that.")
     console.log(users);
     return;
   }
-  checkEmail(email);
+  checkEmail(id, email, password);
   console.log(users);
   res.cookie("user_id", id);
   res.redirect(`/urls/`);
@@ -131,11 +131,52 @@ app.get("/login", (req, res) => {
   res.render("urls_login", templateVars);
 });
 
-function checkEmail(value) {
-  const existingPassword = users.email;
-  if (value === existingPassword) {
-    res.status(400).send("Sorry! You can't see that.")
-    return;
+
+app.post("/login", (req, res) => {
+  console.log(req.body)
+  const id = generateRandomString();
+  const email = req.body.username;
+  const password = req.body.password;
+  console.log("email", email);
+  console.log("password", password);
+  const validLogin = checkEmail(id, email, password)
+  if (validLogin === "failure") {
+    res.status(403).send("Sorry! You can't see that.")
+  }
+  if (validLogin === "success") {
+    res.cookie("user_id", id)
+    res.redirect(`/urls/`);
+  }
+});
+
+function checkEmail(id, email, password) {
+  const actualUser = checkUser(email);
+  console.log("actualUser", actualUser)
+  const existingEmail = actualUser["email"];
+  console.log(existingEmail)
+  const existingPassword = actualUser["password"];
+  console.log(existingPassword)
+  if (!(email)) {
+    return "failure";
+  }
+  else if (email === existingEmail) {
+    if (password !== existingPassword) {
+      return "failure";
+      
+    } else if (password === existingPassword) {
+      return "success";
+    }
+  }
+}
+
+function checkUser(email) {
+  for (let user in users) {
+    console.log("checkUser", users[user]);
+    if (users[user].email === email) {
+
+      return users[user];
+    }
+    
   }
 }
 
