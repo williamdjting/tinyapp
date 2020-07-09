@@ -9,6 +9,8 @@ app.set("view engine", "ejs");
 const cookieParser = require('cookie-parser');
 app.use(cookieParser())
 
+const bcrypt = require('bcrypt');
+
 const users = {
   "aJ48lW": {
     id: "aJ48lW",
@@ -107,16 +109,11 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
 });
 
-// const newUrlDatabase = {
-//   b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
-//   i3BoGr: { longURL: "https://www.google.ca", userID: "aJa4l2" }
-// };
-
 app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   //console.log(req.body)
   const longURL = req.body.longURL;
-  if (req.cookies["user_id"] !== undefined) {
+  if (req.cookies["user_id"] === undefined) {
     res.status(400).send("Not logged in");
   }
   newUrlDatabase[shortURL] = longURL;
@@ -138,19 +135,21 @@ app.post("/register", (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
-  users[id] = { id, email, password };
-  if (checkUser(email)) {
+  const hashedPassword = bcrypt.hashSync(password, 10);
+  users[id] = { id: id, email: email, password: hashedPassword };
+  if (!(checkUser(email))) {
+    res.status(403).send("Sorry! You can't see that.")
+    //console.log(users);
+    return;
+  }
+  if (hashedPassword === '' || email === '') {
     res.status(400).send("Sorry! You can't see that.")
     //console.log(users);
     return;
   }
-  if (password === '' || email === '') {
-    res.status(400).send("Sorry! You can't see that.")
-    //console.log(users);
-    return;
-  }
-  checkEmail(id, email, password);
+  checkEmail(id, email, hashedPassword);
   //console.log(users);
+  
   res.cookie("user_id", id);
   res.redirect(`/urls/`);
 })
@@ -165,10 +164,12 @@ app.post("/login", (req, res) => {
   //console.log(req.body)
   const email = req.body.username;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
   console.log("email", email);
   console.log("password", password);
   const validUser = checkUser(email)
-  if (validUser.password === password) {
+  const checker = bcrypt.compareSync(validUser.password, hashedPassword)
+  if (checker) {
     res.cookie("user_id", validUser.id)
     res.redirect(`/urls/`);
   } else {
@@ -226,5 +227,5 @@ function generateRandomString() {
 }
 
 
-
-
+console.log("the updated users object", users);
+console.log("newUrlDatabase", newUrlDatabase);
