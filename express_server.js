@@ -22,7 +22,6 @@ const users = {
   }
 }
 
-
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -52,7 +51,11 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   let templateVars = { urls: urlDatabase, username: req.cookies["user_id"] };
+  if (req.cookies["user_id"] === undefined) {
+    res.redirect("/login")
+  } else {
   res.render("urls_new", templateVars);
+  }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
@@ -91,8 +94,6 @@ app.post("/urls/:shortURL", (req, res) => {
   urlDatabase[shortURL] = longURL;
   res.redirect(`/urls/`);
 });
-
-
 
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
@@ -176,7 +177,6 @@ function checkUser(email) {
 
       return users[user];
     }
-    
   }
 }
 
