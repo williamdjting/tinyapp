@@ -10,6 +10,7 @@ app.set("view engine", "ejs");
 //app.use(cookieParser())
 const cookieSession = require('cookie-session')
 
+
 app.use(cookieSession({
   name: 'session',
   keys: ['key1'],
@@ -17,6 +18,8 @@ app.use(cookieSession({
 
 
 const bcrypt = require('bcrypt');
+
+const helper = require("./helpers.js");
 
 const users = {
   "aJ48lW": {
@@ -46,7 +49,7 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  //console.log(`Example app listening on port ${PORT}!`);
+  console.log(`Example app listening on port ${PORT}!`);
 });
 
 app.get("/urls.json", (req, res) => {
@@ -147,7 +150,7 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
   users[id] = { id: id, email: email, password: hashedPassword };
-  if (!(checkUser(email))) {
+  if (!(helper.getUserByEmail(email, users))) {
     res.status(403).send("Sorry! You can't see that.")
     //console.log(users);
     return;
@@ -177,7 +180,7 @@ app.post("/login", (req, res) => {
   const hashedPassword = bcrypt.hashSync(password, 10);
   console.log("email", email);
   console.log("password", password);
-  const validUser = checkUser(email)
+  const validUser = helper.getUserByEmail(email, users)
   const checker = bcrypt.compareSync(validUser.password, hashedPassword)
   if (checker) {
     req.session.user_id = validUser.id
@@ -188,7 +191,7 @@ app.post("/login", (req, res) => {
 });
 
 function checkEmail(id, email, password) {
-  const actualUser = checkUser(email);
+  const actualUser = helper.getUserByEmail(email, users);
 
   console.log("actualUser", actualUser)
   const existingEmail = actualUser["email"];
@@ -219,16 +222,16 @@ function urlsForUser(id) { //req.cookies["user_id"]
   return newObj;
 }
 
-function checkUser(email) {
-  for (let user in users) {
-    console.log("checkUser", users[user]);
-    if (users[user].email === email) {
-      return users[user];
-    }
-  }
-}
-
-
+//moved function to helpers.js
+// function getUserByEmail(email) {
+//   for (let user in users) {
+//     console.log("getUserByEmail", users[user]);
+//     if (users[user].email === email) {
+//       console.log(user[user]);
+//       return users[user];
+//     }
+//   }
+// }
 
 function generateRandomString() {
   shortURL = (Math.random().toString(36).substring(7));
