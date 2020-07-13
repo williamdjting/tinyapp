@@ -67,7 +67,7 @@ app.get("/urls", (req, res) => {
   if (!(req.session.user_id)) {
     res.status(400).send("Please login or register first");
     res.render("urls_index", templateVars)
-    
+
   } else {
     res.render("urls_index", templateVars);
   };
@@ -162,7 +162,7 @@ app.post("/register", (req, res) => {
   }
   checkEmail(id, email, hashedPassword);
   //console.log(users);
-  
+
   req.session.user_id = id;
   res.redirect(`/urls/`);
 })
