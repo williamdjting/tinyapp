@@ -66,7 +66,6 @@ app.get("/urls", (req, res) => {
   console.log("templateVars", templateVars);
   if (!(req.session.user_id)) {
     res.status(400).send("Please login or register first");
-    res.render("urls_index", templateVars)
 
   } else {
     res.render("urls_index", templateVars);
@@ -76,7 +75,7 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   let templateVars = { urls: newUrlDatabase, username: req.session.user_id };
   if (!(req.session.user_id)) {
-    res.redirect("/login")
+    res.redirect("/login");
   } else {
     res.render("urls_new", templateVars);
 
@@ -92,6 +91,14 @@ app.get("/urls/:shortURL", (req, res) => {
   // const longURL = newUrlDatabase.shortURL.longURL;
   console.log("longURL", longURL);
   //console.log(templateVars)
+  if (!(req.session.user_id)) {
+    res.status(400).send("Please login or register first");
+  } else if (shortURL !== longURL) {
+    res.status(400).send("You don't own that URL");
+  } else {
+    res.render("urls_new", templateVars);
+
+  }
   res.render("urls_show", templateVars);
 });
 
@@ -100,14 +107,19 @@ app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   newUrlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.session.user_id }
   console.log("newUrlDatabase", newUrlDatabase);
-  res.redirect(`/u/${shortURL}`);         // Respond with 'Ok' (we will replace this)
+  //res.redirect(`/u/${shortURL}`);       
+  if (!(req.session.user_id)) {
+    res.status(400).send("Please login or register to access page");
+  } else  {
+    res.redirect(`/u/${shortURL}`)
+  } 
 });
 
 app.get("/u/:shortURL", (req, res) => {
   shortURL = req.params.shortURL;
   const longURL = newUrlDatabase[shortURL].longURL;
-  console.log("longURL", longURL)
-  res.redirect(longURL);
+  //console.log("longURL", longURL)
+  res.redirect(longURL); 
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
@@ -127,9 +139,10 @@ app.post("/urls/:shortURL", (req, res) => {
   const longURL = req.body.longURL;
   if (!(req.session.user_id)) {
     res.status(400).send("Not logged in");
-  }
+  } else {
   newUrlDatabase[shortURL] = longURL;
-  res.redirect(`/urls/`);
+  res.redirect(`/urls`);
+  }
 });
 
 app.post("/logout", (req, res) => {
@@ -140,7 +153,14 @@ app.post("/logout", (req, res) => {
 
 app.get("/register", (req, res) => {
   let templateVars = { urls: newUrlDatabase, username: req.session.user_id };
-  res.render("urls_register", templateVars);
+
+  if (!(req.session.user_id)) {
+    res.render("urls_register", templateVars);
+  } else {
+    res.redirect("/urls");
+    //res.render("urls_new", templateVars);
+
+  }
 });
 
 app.post("/register", (req, res) => {
@@ -154,22 +174,29 @@ app.post("/register", (req, res) => {
     res.status(403).send("Sorry! You can't see that.")
     //console.log(users);
     return;
-  }
-  if (hashedPassword === '' || email === '') {
+  } else if (hashedPassword === '' || email === '') {
     res.status(400).send("Sorry! You can't see that.")
     //console.log(users);
     return;
-  }
+  } else {
   checkEmail(id, email, hashedPassword);
   //console.log(users);
-
   req.session.user_id = id;
   res.redirect(`/urls/`);
+  }
 })
 
 app.get("/login", (req, res) => {
   let templateVars = { urls: newUrlDatabase, username: req.session.user_id };
-  res.render("urls_login", templateVars);
+
+
+  if (!(req.session.user_id)) {
+    res.render("urls_login", templateVars);
+  } else {
+    res.redirect("/login");
+    //res.render("urls_new", templateVars);
+
+  }
 });
 
 
