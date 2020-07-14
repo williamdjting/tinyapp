@@ -25,5 +25,3 @@ function getUserByEmail(email, users) {
 
 module.exports = { getUserByEmail }
 
-// getUserByEmail("user2@example.com", users);
-
