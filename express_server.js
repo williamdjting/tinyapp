@@ -1,32 +1,37 @@
-const express = require("express");
+const express = require("express"); //imports express module
 const app = express();
 const PORT = 8080; // default port 8080
 
+//body parser for json
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
 
+//sets up ejs templates
 app.set("view engine", "ejs");
+
+//sets up encrpted cookie session
 const cookieSession = require('cookie-session')
-
-
 app.use(cookieSession({
   name: 'session',
   keys: ['key1'],
 }))
 
 
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt'); //sets up bcrypt hashing
 
-const helper = require("./helpers.js");
+const helper = require("./helpers.js"); //imports helper.js
 
+//users object, stores the user information
 const users = {
   
 }
 
+//database to store urls
 const newUrlDatabase = {
   
 };
 
+//main page that shows urls
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlsForUser(req.session.user_id), username: req.session.user_id };
   if (!(req.session.user_id)) {
@@ -36,6 +41,7 @@ app.get("/urls", (req, res) => {
   };
 });
 
+//creates new url for user
 app.get("/urls/new", (req, res) => {
   let templateVars = { urls: newUrlDatabase, username: req.session.user_id };
   if (!(req.session.user_id)) {
@@ -45,6 +51,7 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
+//checks if user has access to specific id , if not will prompt them to register
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = newUrlDatabase[shortURL].longURL
@@ -59,6 +66,7 @@ app.get("/urls/:shortURL", (req, res) => {
   }
 });
 
+//checks if individual has access to urls page if they have cookies
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   newUrlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.session.user_id }
@@ -69,6 +77,7 @@ app.post("/urls", (req, res) => {
   }
 });
 
+//goes to dynamic id link and its url
 app.get("/u/:shortURL", (req, res) => {
   shortURL = req.params.shortURL;
   
@@ -76,6 +85,7 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect("/urls");
 });
 
+//deletes the dynamic id link from database
 app.post("/urls/:shortURL/delete", (req, res) => {
   shortURL = req.params.shortURL;
   if (req.session.user_id === newUrlDatabase[shortURL].userID) {
@@ -86,6 +96,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
 });
 
+//sends to the dynamic id link and its url
 app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
@@ -97,11 +108,13 @@ app.post("/urls/:shortURL", (req, res) => {
   }
 });
 
+//logs out the user
 app.post("/logout", (req, res) => {
   req.session.user_id = null
   res.redirect(`/login`);
 });
 
+//checks the registration 
 app.get("/register", (req, res) => {
   let templateVars = { urls: newUrlDatabase, username: req.session.user_id };
   if (!(req.session.user_id)) {
@@ -111,6 +124,7 @@ app.get("/register", (req, res) => {
   }
 });
 
+//checks if the passed in information exists already for registration purposes
 app.post("/register", (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
@@ -130,6 +144,7 @@ app.post("/register", (req, res) => {
   }
 })
 
+//checks the login data
 app.get("/login", (req, res) => {
   let templateVars = { urls: newUrlDatabase, username: req.session.user_id };
   if (!(req.session.user_id)) {
@@ -139,7 +154,7 @@ app.get("/login", (req, res) => {
   }
 });
 
-
+//checks the login data to confirm if it is valid
 app.post("/login", (req, res) => {
   const email = req.body.username;
   const password = req.body.password;
@@ -154,6 +169,7 @@ app.post("/login", (req, res) => {
   }
 });
 
+//checks if the email/password parameters that is passed in exist in the database already
 function checkEmail(id, email, password) {
   const actualUser = helper.getUserByEmail(email, users);
   const existingEmail = actualUser["email"];
@@ -170,6 +186,7 @@ function checkEmail(id, email, password) {
   }
 }
 
+//finds only the urls that belong to this users' id
 function urlsForUser(id) {
   let newObj = {};
   for (let shortURL in newUrlDatabase) {
@@ -180,6 +197,7 @@ function urlsForUser(id) {
   return newObj;
 }
 
+// generatesRandomString id
 function generateRandomString() {
   shortURL = (Math.random().toString(36).substring(7));
   return shortURL;
