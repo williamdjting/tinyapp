@@ -20,38 +20,12 @@ const bcrypt = require('bcrypt');
 const helper = require("./helpers.js");
 
 const users = {
-  "aJ48lW": {
-    id: "aJ48lW",
-    email: "william@gmail.com",
-    password: "menintrees"
-  },
-  "aJa4l2": {
-    id: "aJa4l2",
-    email: "tommy@gmail.com",
-    password: "eatdinner"
-  }
+  
 }
 
 const newUrlDatabase = {
-  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
-  i3BoGr: { longURL: "https://www.google.ca", userID: "aJa4l2" }
+  
 };
-
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
-
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`); // leaving to confirm that server is up
-});
-
-// app.get("/urls.json", (req, res) => {
-//   res.json(newUrlDatabase);
-// });
-
-// app.get("/hello", (req, res) => {
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });
 
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlsForUser(req.session.user_id), username: req.session.user_id };
@@ -78,10 +52,11 @@ app.get("/urls/:shortURL", (req, res) => {
   if (!(req.session.user_id)) {
     res.status(400).send("Please login or register first");
   } 
-  else {
-    res.render("urls_new", templateVars);
+  else if (longURL) {
+    res.render("urls_show", templateVars);
+  } else {
+  res.render("urls_new", templateVars);
   }
-  res.render("urls_show", templateVars);
 });
 
 app.post("/urls", (req, res) => {
@@ -98,9 +73,6 @@ app.get("/u/:shortURL", (req, res) => {
   shortURL = req.params.shortURL;
   
   const longURL = newUrlDatabase[shortURL].longURL;
-  console.log("longURL", longURL);
-  console.log("shortURL", shortURL);
-  // res.redirect(longURL);
   res.redirect("/urls");
 });
 
@@ -120,7 +92,7 @@ app.post("/urls/:shortURL", (req, res) => {
   if (!(req.session.user_id)) {
     res.status(400).send("Not logged in");
   } else {
-    newUrlDatabase[shortURL] = longURL;
+    newUrlDatabase[shortURL].longURL = longURL;
     res.redirect(`/urls`);
   }
 });
@@ -212,3 +184,7 @@ function generateRandomString() {
   shortURL = (Math.random().toString(36).substring(7));
   return shortURL;
 }
+
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`); // leaving to confirm that server is up
+});
