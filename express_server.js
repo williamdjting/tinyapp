@@ -1,6 +1,10 @@
 const express = require("express");
 const app = express();
+<<<<<<< HEAD
 const PORT = 8080; // default port 8080
+=======
+const PORT = 8081; // default port 8080
+>>>>>>> 11e3285dc911cbdd2894c3e73bacf323644f7348
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
