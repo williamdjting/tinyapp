@@ -31,6 +31,10 @@ const newUrlDatabase = {
   
 };
 
+app.get("/", (req, res) => {
+  res.redirect('/register');
+});
+
 //main page that shows urls
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlsForUser(req.session.user_id), username: req.session.user_id };
@@ -73,7 +77,7 @@ app.post("/urls", (req, res) => {
   if (!(req.session.user_id)) {
     res.status(400).send("Please login or register to access page");
   } else {
-    res.redirect(`/u/${shortURL}`)
+    res.redirect('/urls');
   }
 });
 
@@ -82,7 +86,7 @@ app.get("/u/:shortURL", (req, res) => {
   shortURL = req.params.shortURL;
   
   const longURL = newUrlDatabase[shortURL].longURL;
-  res.redirect("/urls");
+  res.redirect(longURL);
 });
 
 //deletes the dynamic id link from database
@@ -158,9 +162,11 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.username;
   const password = req.body.password;
-  const hashedPassword = bcrypt.hashSync(password, 10);
-  const validUser = helper.getUserByEmail(email, users)
-  const checker = bcrypt.compareSync(validUser.password, hashedPassword)
+  const validUser = helper.getUserByEmail(email, users);
+  let checker = false;
+  if (validUser) {
+    checker = bcrypt.compareSync(password, validUser.password);
+  }
   if (checker) {
     req.session.user_id = validUser.id
     res.redirect(`/urls/`);
