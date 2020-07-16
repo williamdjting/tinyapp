@@ -37,7 +37,7 @@ app.get("/", (req, res) => {
 
 //main page that shows urls
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlsForUser(req.session.user_id), username: req.session.user_id };
+  let templateVars = { urls: helper.urlsForUser(req.session.user_id, newUrlDatabase), username: req.session.user_id };
   if (!(req.session.user_id)) {
     res.status(400).send("Please login or register first");
   } else {
@@ -72,7 +72,7 @@ app.get("/urls/:shortURL", (req, res) => {
 
 //checks if individual has access to urls page if they have cookies
 app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString();
+  const shortURL = helper.generateRandomString();
   newUrlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.session.user_id }
   if (!(req.session.user_id)) {
     res.status(400).send("Please login or register to access page");
@@ -130,7 +130,7 @@ app.get("/register", (req, res) => {
 
 //checks if the passed in information exists already for registration purposes
 app.post("/register", (req, res) => {
-  const id = generateRandomString();
+  const id = helper.generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
@@ -142,7 +142,7 @@ app.post("/register", (req, res) => {
     res.status(400).send("Sorry! You can't see that.")
     return;
   } else {
-    checkEmail(id, email, hashedPassword);
+    helper.checkEmail(id, email, hashedPassword,users);
     req.session.user_id = id;
     res.redirect(`/urls/`);
   }
@@ -175,39 +175,7 @@ app.post("/login", (req, res) => {
   }
 });
 
-//checks if the email/password parameters that is passed in exist in the database already
-function checkEmail(id, email, password) {
-  const actualUser = helper.getUserByEmail(email, users);
-  const existingEmail = actualUser["email"];
-  const existingPassword = actualUser["password"];
-  if (!(email)) {
-    return "failure";
-  }
-  else if (email === existingEmail) {
-    if (password !== existingPassword) {
-      return "failure";
-    } else if (password === existingPassword) {
-      return "success";
-    }
-  }
-}
 
-//finds only the urls that belong to this users' id
-function urlsForUser(id) {
-  let newObj = {};
-  for (let shortURL in newUrlDatabase) {
-    if (id === newUrlDatabase[shortURL].userID) {
-      newObj[shortURL] = newUrlDatabase[shortURL];
-    }
-  }
-  return newObj;
-}
-
-// generatesRandomString id
-function generateRandomString() {
-  shortURL = (Math.random().toString(36).substring(7));
-  return shortURL;
-}
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`); // leaving to confirm that server is up
