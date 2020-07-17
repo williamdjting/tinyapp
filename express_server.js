@@ -26,6 +26,19 @@ const users = {
   
 }
 
+// const users = { 
+//   "userRandomID": {
+//     id: "userRandomID", 
+//     email: "user@example.com", 
+//     password: "purple-monkey-dinosaur"
+//   },
+//  "user2RandomID": {
+//     id: "user2RandomID", 
+//     email: "user2@example.com", 
+//     password: "dishwasher-funk"
+//   }
+// }
+
 //database to store urls
 const newUrlDatabase = {
   
@@ -58,12 +71,23 @@ app.get("/urls/new", (req, res) => {
 //checks if user has access to specific id , if not will prompt them to register
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const longURL = newUrlDatabase[shortURL].longURL
-  let templateVars = { shortURL: shortURL, longURL: longURL, username: req.session.user_id };
   if (!(req.session.user_id)) {
     res.status(400).send("Please login or register first");
+    return;
   } 
-  else if (longURL) {
+  const record = newUrlDatabase[shortURL];
+  console.log(record);
+  if (!record) {
+    res.status(400).send("Record not found.");
+    return
+  } 
+  if (record.userID !== req.session.user_id) { 
+    res.status(404).send("You don't own this ID.");
+    return;
+  }
+  const longURL = newUrlDatabase[shortURL].longURL
+  let templateVars = { shortURL: shortURL, longURL: longURL, username: req.session.user_id };
+  if (longURL) {
     res.render("urls_show", templateVars);
   } else {
   res.render("urls_new", templateVars);
@@ -106,10 +130,12 @@ app.post("/urls/:shortURL", (req, res) => {
   const longURL = req.body.longURL;
   if (!(req.session.user_id)) {
     res.status(400).send("Not logged in");
-  } else {
-    newUrlDatabase[shortURL].longURL = longURL;
-    res.redirect(`/urls`);
-  }
+    return;
+  } 
+  const record = newUrlDatabase[shortURL];
+  console.log(record);
+  newUrlDatabase[shortURL].longURL = longURL;
+  res.redirect(`/urls`);
 });
 
 //logs out the user
