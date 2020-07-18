@@ -23,7 +23,7 @@ const helper = require("./helpers.js"); //imports helper.js
 
 //users object, stores the user information
 const users = {
-  
+
 }
 
 // const users = { 
@@ -41,7 +41,7 @@ const users = {
 
 //database to store urls
 const newUrlDatabase = {
-  
+
 };
 
 app.get("/", (req, res) => {
@@ -60,7 +60,7 @@ app.get("/urls", (req, res) => {
 
 //creates new url for user
 app.get("/urls/new", (req, res) => {
-  let templateVars = { urls: newUrlDatabase, username: req.session.user_id };
+  let templateVars = { urls: newUrlDatabase, username: req.session.email };
   if (!(req.session.user_id)) {
     res.redirect("/login");
   } else {
@@ -74,14 +74,14 @@ app.get("/urls/:shortURL", (req, res) => {
   if (!(req.session.user_id)) {
     res.status(400).send("Please login or register first");
     return;
-  } 
+  }
   const record = newUrlDatabase[shortURL];
   console.log(record);
   if (!record) {
     res.status(400).send("Record not found.");
     return
-  } 
-  if (record.userID !== req.session.user_id) { 
+  }
+  if (record.userID !== req.session.user_id) {
     res.status(404).send("You don't own this ID.");
     return;
   }
@@ -90,36 +90,46 @@ app.get("/urls/:shortURL", (req, res) => {
   if (longURL) {
     res.render("urls_show", templateVars);
   } else {
-  res.render("urls_new", templateVars);
+    res.render("urls_new", templateVars);
   }
 });
 
 //checks if individual has access to urls page if they have cookies
 app.post("/urls", (req, res) => {
-  const shortURL = helper.generateRandomString();
-  newUrlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.session.user_id }
   if (!(req.session.user_id)) {
     res.status(400).send("Please login or register to access page");
   } else {
-    res.redirect('/urls');
+    const shortURL = helper.generateRandomString();
+    newUrlDatabase[shortURL] = {
+      longURL: req.body.longURL,
+      userID: req.session.user_id
+    }
+    res.redirect(`/urls/${shortURL}`);
   }
 });
 
 //goes to dynamic id link and its url
 app.get("/u/:shortURL", (req, res) => {
   shortURL = req.params.shortURL;
-  
+  const record = newUrlDatabase[shortURL];
+  if (!record) {
+    res.status(400).send("Record not found.");
+    return
+  }
   const longURL = newUrlDatabase[shortURL].longURL;
   res.redirect(longURL);
 });
 
 //deletes the dynamic id link from database
 app.post("/urls/:shortURL/delete", (req, res) => {
-  shortURL = req.params.shortURL;
-  if (req.session.user_id === newUrlDatabase[shortURL].userID) {
-    delete newUrlDatabase[shortURL];
-    res.redirect("/urls");
+  const shortURL = req.params.shortURL;
+  const record = newUrlDatabase[shortURL];
+  if (!record) {
+    res.status(400).send("Record not found.");
+  } else if (record.userID !== req.session.user_id) {
+    res.status(404).send("You don't own this ID.");
   } else {
+    delete newUrlDatabase[shortURL];
     res.redirect("/urls");
   }
 });
@@ -131,9 +141,16 @@ app.post("/urls/:shortURL", (req, res) => {
   if (!(req.session.user_id)) {
     res.status(400).send("Not logged in");
     return;
-  } 
+  }
   const record = newUrlDatabase[shortURL];
-  console.log(record);
+  if (!record) {
+    res.status(400).send("Record not found.");
+    return
+  }
+  if (record.userID !== req.session.user_id) {
+    res.status(404).send("You don't own this ID.");
+    return;
+  }
   newUrlDatabase[shortURL].longURL = longURL;
   res.redirect(`/urls`);
 });
@@ -141,7 +158,7 @@ app.post("/urls/:shortURL", (req, res) => {
 //logs out the user
 app.post("/logout", (req, res) => {
   req.session.user_id = null
-  res.redirect(`/login`);
+  res.redirect("/login");
 });
 
 //checks the registration 
@@ -156,22 +173,25 @@ app.get("/register", (req, res) => {
 
 //checks if the passed in information exists already for registration purposes
 app.post("/register", (req, res) => {
-  const id = helper.generateRandomString();
+  
   const email = req.body.email;
   const password = req.body.password;
-  const hashedPassword = bcrypt.hashSync(password, 10);
-  users[id] = { id: id, email: email, password: hashedPassword };
-  if (!(helper.getUserByEmail(email, users))) {
-    res.status(403).send("Sorry! You can't see that.")
-    return;
-  } else if (hashedPassword === '' || email === '') {
+  if (password === '' || email === '') {
     res.status(400).send("Sorry! You can't see that.")
     return;
-  } else {
-    helper.checkEmail(id, email, hashedPassword,users);
-    req.session.user_id = id;
-    res.redirect(`/urls/`);
   }
+  if (helper.getUserByEmail(email, users)) {
+    res.status(403).send("Sorry! You can't see that.")
+    return;
+  }
+
+  const id = helper.generateRandomString();
+  const hashedPassword = bcrypt.hashSync(password, 10);
+  users[id] = { id: id, email: email, password: hashedPassword };
+
+  req.session.user_id = id;
+  res.redirect(`/urls/`);
+
 })
 
 //checks the login data
@@ -180,7 +200,7 @@ app.get("/login", (req, res) => {
   if (!(req.session.user_id)) {
     res.render("urls_login", templateVars);
   } else {
-    res.redirect("/login");
+    res.redirect("/urls");
   }
 });
 

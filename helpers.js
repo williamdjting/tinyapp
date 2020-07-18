@@ -6,6 +6,7 @@ function getUserByEmail(email, users) {
       return users[user];
     } 
   }
+  return undefined;
 }
 
 //finds only the urls that belong to this users' id
@@ -25,24 +26,9 @@ function generateRandomString() {
   return shortURL;
 }
 
-//checks if the email/password parameters that is passed in exist in the database already
-function checkEmail(id, email, password, users) {
-  const actualUser = getUserByEmail(email, users);
-  const existingEmail = actualUser["email"];
-  const existingPassword = actualUser["password"];
-  if (!(email)) {
-    return "failure";
-  }
-  else if (email === existingEmail) {
-    if (password !== existingPassword) {
-      return "failure";
-    } else if (password === existingPassword) {
-      return "success";
-    }
-  }
-}
 
 
 
-module.exports = { getUserByEmail, urlsForUser, generateRandomString, checkEmail }
+
+module.exports = { getUserByEmail, urlsForUser, generateRandomString }
 
